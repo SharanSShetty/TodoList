@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Reminder</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .email-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px 10px 0 0;
+            margin: -30px -30px 20px -30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+        }
+        .reminder-icon {
+            font-size: 48px;
+            margin-bottom: 10px;
+        }
+        .task-details {
+            background-color: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            border-left: 4px solid #007bff;
+            margin: 20px 0;
+        }
+        .task-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 10px;
+        }
+        .end-time {
+            font-size: 18px;
+            color: #dc3545;
+            font-weight: bold;
+            background-color: #fff3cd;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ffeaa7;
+            text-align: center;
+        }
+        .message {
+            font-size: 16px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #666;
+            font-size: 14px;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+        }
+        .urgency-badge {
+            display: inline-block;
+            background-color: #ff6b6b;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+    </style>
+</head>
+<body>
+    <div class="email-container">
+        <div class="header">
+            <div class="reminder-icon">⏰</div>
+            <h1>Task Reminder</h1>
+            <span class="urgency-badge">20 Minutes Left</span>
+        </div>
+        
+        <div class="message">
+            <p><strong>Hello!</strong></p>
+            <p>This is a friendly reminder that your task is ending soon.</p>
+        </div>
+        
+        <div class="task-details">
+            <div class="task-title">📋 {{ task_title }}</div>
+            <div class="end-time">
+                🕐 Ending at: {{ end_datetime }}
+            </div>
+        </div>
+        
+        <div class="message">
+            <p>⚡ <strong>Quick Action Required!</strong></p>
+            <p>Your task will end in approximately <strong>20 minutes</strong>. Please make sure to complete any remaining work or extend the deadline if needed.</p>
+        </div>
+        
+        <div class="footer">
+            <p>This is an automated reminder from your Task Management System.</p>
+            <p>Stay organized, stay productive! 🚀</p>
+        </div>
+    </div>
+</body>
+</html>
