@@ -77,11 +77,3 @@ TO-DO/
 
 5. **Access Locally**
    Visit: `http://127.0.0.1:5000`
-
-## 🔒 Security Note
-
-Ensure you update sensitive credentials such as:
-- `SECRET_KEY`
-- Email username and app password in `app.py`
-
-Instead of hardcoding them, consider using environment variables or a `.env` file for better security.
