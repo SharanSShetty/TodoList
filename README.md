@@ -50,30 +50,3 @@ TO-DO/
 ├── Todo/                   # Virtual environment (optional)
 └── __pycache__/            # Python bytecode
 ```
-
-## ⚙️ Setup Instructions
-
-1. **Clone the Repository**
-   ```bash
-   git clone https://github.com/your-username/todo-flask-app.git
-   cd todo-flask-app
-   ```
-
-2. **Create and Activate a Virtual Environment**
-   ```bash
-   python -m venv venv
-   source venv/bin/activate  # On Windows: venv\Scripts\activate
-   ```
-
-3. **Install Requirements**
-   ```bash
-   pip install -r requirements.txt
-   ```
-
-4. **Run the App**
-   ```bash
-   python app.py
-   ```
-
-5. **Access Locally**
-   Visit: `http://127.0.0.1:5000`
