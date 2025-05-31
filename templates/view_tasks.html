@@ -1,0 +1,1592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Tasks</title>
+    <style>
+        :root {
+            /* Dark mode colors */
+            --bg-gradient-start: #2c3e50;
+            --bg-gradient-end: #34495e;
+            --navbar-bg: rgba(45, 55, 72, 0.95);
+            --navbar-text: #e2e8f0;
+            --navbar-brand: #81c784;
+            --sidebar-bg: rgba(45, 55, 72, 0.98);
+            --sidebar-text: #e2e8f0;
+            --sidebar-header-gradient-start: #2c3e50;
+            --sidebar-header-gradient-end: #34495e;
+            --sidebar-header-text: #e2e8f0;
+            --sidebar-border: rgba(255, 255, 255, 0.1);
+            --sidebar-hover-bg: rgba(129, 199, 132, 0.1);
+            --sidebar-hover-border: #81c784;
+            --sidebar-hover-text: #81c784;
+            --hamburger-bg: rgba(129, 199, 132, 0.1);
+            --hamburger-line: #e2e8f0;
+            --overlay-bg: rgba(0, 0, 0, 0.7);
+            --circle-bg: rgba(255, 255, 255, 0.05);
+            --shadow-color: rgba(0, 0, 0, 0.3);
+            --note-bg: rgba(45, 55, 72, 0.95);
+            --note-header-bg: rgba(129, 199, 132, 0.1);
+            --note-border: rgba(129, 199, 132, 0.2);
+            --note-text: #e2e8f0;
+            --note-hover: rgba(129, 199, 132, 0.05);
+            --completed-text: #a0aec0;
+            --priority-high: #fc8181;
+            --priority-medium: #f6e05e;
+            --priority-low: #68d391;
+            --delete-btn-bg: #fc8181;
+            --delete-btn-hover: #f56565;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            transition: all 0.3s ease;
+        }
+
+        /* Loading Screen Styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, var(--bg-gradient-start) 0%, var(--bg-gradient-end) 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: all 0.5s ease;
+        }
+
+        .loading-screen.hidden {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        .loader {
+            width: 80px;
+            aspect-ratio: 1;
+            display: grid;
+            animation: l14 4s infinite;
+            margin-bottom: 20px;
+        }
+        .loader::before,
+        .loader::after {
+            content: "";
+            grid-area: 1/1;
+            border: 8px solid;
+            border-radius: 50%;
+            border-color: #81c784 #81c784 #0000 #0000;
+            mix-blend-mode: darken;
+            animation: l14 1s infinite linear;
+        }
+        .loader::after {
+            border-color: #0000 #0000 #4ecdc4 #4ecdc4;
+            animation-direction: reverse;
+        }
+
+        .loading-text {
+            color: var(--navbar-text);
+            font-size: 1.2rem;
+            font-weight: 500;
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+
+        .loading-dots {
+            display: inline-block;
+            width: 20px;
+            text-align: left;
+        }
+
+        .loading-dots::after {
+            content: '';
+            animation: dots 1.5s steps(4, end) infinite;
+        }
+
+        @keyframes l14{
+            100%{transform: rotate(1turn)}
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 0.6; }
+            50% { opacity: 1; }
+        }
+
+        @keyframes dots {
+            0% { content: ''; }
+            25% { content: '.'; }
+            50% { content: '..'; }
+            75% { content: '...'; }
+            100% { content: ''; }
+        }
+
+        .navbar {
+            background: var(--navbar-bg);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 15px 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 30px var(--shadow-color);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            transition: all 0.3s ease;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .nav-left {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        .nav-right {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-shrink: 0;
+        }
+
+        .hamburger {
+            display: flex;
+            flex-direction: column;
+            cursor: pointer;
+            padding: 10px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            background: transparent;
+            border: none;
+            min-width: 44px;
+            min-height: 44px;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hamburger:hover {
+            background: var(--hamburger-bg);
+        }
+
+        .hamburger span {
+            width: 25px;
+            height: 3px;
+            background: var(--hamburger-line);
+            margin: 3px 0;
+            transition: all 0.3s ease;
+            border-radius: 2px;
+        }
+
+        .hamburger.active span:nth-child(1) {
+            transform: rotate(45deg) translate(6px, 6px);
+        }
+
+        .hamburger.active span:nth-child(2) {
+            opacity: 0;
+        }
+
+        .hamburger.active span:nth-child(3) {
+            transform: rotate(-45deg) translate(6px, -6px);
+        }
+
+        .nav-brand {
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--navbar-brand);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .nav-title {
+            color: var(--navbar-text);
+            font-size: 1.5rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-align: center;
+            flex: 1;
+            margin: 0 20px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Sidebar Menu */
+        .sidebar-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--overlay-bg);
+            z-index: 998;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+            backdrop-filter: blur(5px);
+        }
+
+        .sidebar-overlay.active {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: -320px;
+            width: 320px;
+            height: 100%;
+            background: var(--sidebar-bg);
+            backdrop-filter: blur(20px);
+            z-index: 999;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 2px 0 20px var(--shadow-color);
+            border-right: 1px solid rgba(255, 255, 255, 0.2);
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar.active {
+            left: 0;
+        }
+
+        .sidebar-header {
+            padding: 30px 20px;
+            border-bottom: 1px solid var(--sidebar-border);
+            background: linear-gradient(135deg, var(--sidebar-header-gradient-start) 0%, var(--sidebar-header-gradient-end) 100%);
+            color: var(--sidebar-header-text);
+            transition: all 0.3s ease;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .sidebar-brand {
+            font-size: 1.8rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .sidebar-menu {
+            padding: 20px 0;
+        }
+
+        .sidebar-link {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            padding: 18px 25px;
+            text-decoration: none;
+            color: var(--sidebar-text);
+            font-weight: 500;
+            font-size: 1.1rem;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            min-height: 60px;
+            position: relative;
+        }
+
+        .sidebar-link:hover {
+            background: var(--sidebar-hover-bg);
+            border-left-color: var(--sidebar-hover-border);
+            color: var(--sidebar-hover-text);
+        }
+
+        .sidebar-link.add-task {
+            background: linear-gradient(90deg, rgba(78, 205, 196, 0.1), transparent);
+            border-left-color: #4ecdc4;
+            color: #4ecdc4;
+        }
+
+        .sidebar-link.view-task {
+            background: linear-gradient(90deg, rgba(240, 147, 251, 0.1), transparent);
+            border-left-color: #f093fb;
+            color: #f093fb;
+        }
+
+        .sidebar-link.home {
+            background: linear-gradient(90deg, rgba(102, 126, 234, 0.1), transparent);
+            border-left-color: #667eea;
+            color: #667eea;
+        }
+
+        .sidebar-link span:first-child {
+            font-size: 1.3rem;
+            width: 25px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        /* Main Content */
+        .main-content {
+            padding: 20px 0;
+            width: 100%;
+        }
+
+        .page-title {
+            color: var(--note-text);
+            font-size: 2rem;
+            font-weight: 600;
+            margin-bottom: 30px;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        /* Notes Container Styles */
+        .notes-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        .task-note {
+            background: var(--note-bg);
+            backdrop-filter: blur(20px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 15px 35px var(--shadow-color);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            min-height: 280px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .task-note:hover {
+            transform: translateY(-8px) rotate(1deg);
+            box-shadow: 0 20px 45px var(--shadow-color);
+        }
+
+        .task-note.completed {
+            opacity: 0.7;
+            filter: grayscale(0.3);
+        }
+
+        .task-note.completed:hover {
+            opacity: 0.9;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--note-border);
+            gap: 10px;
+        }
+
+        .note-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: var(--note-text);
+            margin: 0;
+            line-height: 1.3;
+            flex: 1;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .completed .note-title {
+            text-decoration: line-through;
+            color: var(--completed-text);
+        }
+
+        .note-priority {
+            font-size: 0.9rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .priority-high {
+            background: rgba(252, 129, 129, 0.2);
+            color: var(--priority-high);
+        }
+
+        .priority-medium {
+            background: rgba(246, 224, 94, 0.2);
+            color: var(--priority-medium);
+        }
+
+        .priority-low {
+            background: rgba(104, 211, 145, 0.2);
+            color: var(--priority-low);
+        }
+
+        .priority-high::before {
+            content: "🔴 ";
+        }
+
+        .priority-medium::before {
+            content: "🟡 ";
+        }
+
+        .priority-low::before {
+            content: "🟢 ";
+        }
+
+        .note-description {
+            color: var(--note-text);
+            font-size: 1rem;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            flex: 1;
+            opacity: 0.9;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+        }
+
+        .completed .note-description {
+            color: var(--completed-text);
+            text-decoration: line-through;
+        }
+
+        .note-dates {
+            margin-bottom: 20px;
+        }
+
+        .date-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+            gap: 10px;
+        }
+
+        .date-label {
+            color: var(--note-text);
+            opacity: 0.7;
+            font-weight: 500;
+            flex-shrink: 0;
+        }
+
+        .date-value {
+            color: var(--note-text);
+            font-weight: 600;
+        }
+
+        .time-value {
+            color: var(--note-text);
+            opacity: 0.8;
+            font-size: 0.8rem;
+            margin-left: 5px;
+        }
+
+        .note-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+            padding-top: 15px;
+            border-top: 1px solid var(--note-border);
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        .task-status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .status-active {
+            background: rgba(78, 205, 196, 0.2);
+            color: #4ecdc4;
+        }
+
+        .status-completed {
+            background: rgba(136, 136, 136, 0.2);
+            color: #888;
+        }
+
+        .status-overdue {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+
+        /* Delete Button */
+        .btn-delete {
+            background: var(--delete-btn-bg);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            min-height: 36px;
+        }
+
+        .btn-delete:hover {
+            background: var(--delete-btn-hover);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(255, 107, 107, 0.3);
+        }
+
+        .btn-delete:active {
+            transform: translateY(0);
+        }
+
+        .btn-delete::before {
+            content: "🗑️";
+        }
+
+        /* Edit Button */
+        .btn-edit {
+            background: #4ecdc4;
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.85rem;
+            text-decoration: none;
+            min-height: 36px;
+        }
+
+        .btn-edit:hover {
+            background: #38b2ac;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.3);
+        }
+
+        .btn-edit:active {
+            transform: translateY(0);
+        }
+
+        .btn-edit::before {
+            content: "✏️";
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--note-text);
+            opacity: 0.7;
+            grid-column: 1 / -1;
+        }
+
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+        }
+
+        .empty-state-text {
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+
+        .empty-state-subtext {
+            font-size: 1rem;
+            opacity: 0.8;
+        }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.7);
+            animation: modalFadeIn 0.3s;
+            backdrop-filter: blur(5px);
+        }
+
+        .modal-content {
+            background-color: var(--note-bg);
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid var(--note-border);
+            width: 90%;
+            max-width: 500px;
+            border-radius: 15px;
+            box-shadow: 0 15px 35px var(--shadow-color);
+            position: relative;
+            backdrop-filter: blur(20px);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .close {
+            color: var(--note-text);
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .close:hover {
+            color: var(--priority-high);
+            transform: rotate(90deg);
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .modal h2 {
+            color: var(--navbar-brand);
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+            text-align: center;
+            padding-right: 40px;
+        }
+
+        .modal label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--note-text);
+            font-weight: 500;
+        }
+
+        .modal input[type="text"],
+        .modal input[type="date"],
+        .modal input[type="time"],
+        .modal textarea,
+        .modal select {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 20px;
+            border: 1px solid var(--note-border);
+            border-radius: 8px;
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--note-text);
+            font-size: 1rem;
+            transition: all 0.3s ease;
+        }
+
+        .modal input[type="text"]:focus,
+        .modal input[type="date"]:focus,
+        .modal input[type="time"]:focus,
+        .modal textarea:focus,
+        .modal select:focus {
+            outline: none;
+            border-color: var(--navbar-brand);
+            box-shadow: 0 0 0 3px rgba(129, 199, 132, 0.2);
+        }
+
+        .modal textarea {
+            height: 120px;
+            resize: vertical;
+            font-family: inherit;
+        }
+
+        .modal button[type="submit"] {
+            background: linear-gradient(90deg, #81c784, #4ecdc4);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: block;
+            width: 100%;
+            font-size: 1rem;
+            margin-top: 10px;
+            min-height: 48px;
+        }
+
+        .modal button[type="submit"]:hover {
+            background: linear-gradient(90deg, #66bb6a, #38b2ac);
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(78, 205, 196, 0.3);
+        }
+
+        .modal button[type="submit"]:active {
+            transform: translateY(0);
+        }
+
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+            }
+            to {
+                opacity: 1;
+            }
+        }
+
+        /* Enhanced Responsive Design */
+        
+        /* Large tablets and small desktops */
+        @media (max-width: 1024px) {
+            .navbar {
+                padding: 15px 25px;
+            }
+            
+            .sidebar {
+                width: 300px;
+                left: -300px;
+            }
+            
+            .notes-container {
+                grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+                gap: 20px;
+                padding: 15px;
+            }
+        }
+
+        /* Tablets */
+        @media (max-width: 768px) {
+            body {
+                padding: 15px;
+            }
+
+            .navbar {
+                padding: 15px 20px;
+                margin-bottom: 25px;
+                border-radius: 12px;
+            }
+
+            .nav-title {
+                font-size: 1.3rem;
+                margin: 0 15px;
+            }
+
+            .nav-brand {
+                font-size: 1.3rem;
+            }
+
+            .sidebar {
+                width: 280px;
+                left: -280px;
+            }
+
+            .sidebar-header {
+                padding: 25px 20px;
+            }
+
+            .sidebar-brand {
+                font-size: 1.6rem;
+            }
+
+            .sidebar-link {
+                padding: 16px 20px;
+                font-size: 1rem;
+                min-height: 55px;
+            }
+
+            .notes-container {
+                grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+                gap: 20px;
+                padding: 15px;
+            }
+
+            .page-title {
+                font-size: 1.7rem;
+                gap: 10px;
+            }
+
+            .task-note {
+                padding: 20px;
+                min-height: 250px;
+            }
+
+            .note-title {
+                font-size: 1.2rem;
+            }
+
+            .note-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 15px;
+            }
+
+            .action-buttons {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                padding: 25px;
+            }
+        }
+
+        /* Mobile phones - Fixed sidebar width */
+        @media (max-width: 480px) {
+            body {
+                padding: 10px;
+            }
+
+            .navbar {
+                padding: 12px 15px;
+                margin-bottom: 20px;
+                border-radius: 10px;
+            }
+
+            .nav-left {
+                gap: 15px;
+            }
+
+            .nav-brand {
+                font-size: 1.1rem;
+                gap: 8px;
+            }
+
+            .nav-brand span:first-child {
+                font-size: 1.2rem;
+            }
+
+            .nav-title {
+                font-size: 1.1rem;
+                margin: 0 10px;
+            }
+
+            .hamburger {
+                padding: 8px;
+                min-width: 40px;
+                min-height: 40px;
+            }
+
+            .hamburger span {
+                width: 22px;
+                height: 2.5px;
+            }
+
+            /* Fixed mobile sidebar - 85% width instead of 100% */
+            .sidebar {
+                width: 85%;
+                left: -85%;
+                max-width: 320px;
+            }
+
+            .sidebar.active {
+                left: 0;
+            }
+
+            .sidebar-header {
+                padding: 20px 15px;
+            }
+
+            .sidebar-brand {
+                font-size: 1.4rem;
+                gap: 10px;
+            }
+
+            .sidebar-link {
+                padding: 15px 20px;
+                font-size: 0.95rem;
+                min-height: 50px;
+                gap: 12px;
+            }
+
+            .sidebar-link span:first-child {
+                font-size: 1.2rem;
+                width: 22px;
+            }
+
+            .page-title {
+                font-size: 1.5rem;
+                gap: 8px;
+                flex-direction: column;
+            }
+
+            .page-title span:first-child {
+                font-size: 1.8rem;
+            }
+
+            .notes-container {
+                grid-template-columns: 1fr;
+                gap: 15px;
+                padding: 10px;
+            }
+
+            .task-note {
+                padding: 18px;
+                min-height: 220px;
+            }
+
+            .note-title {
+                font-size: 1.1rem;
+            }
+
+            .note-header {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 10px;
+            }
+
+            .note-priority {
+                align-self: flex-start;
+            }
+
+            .date-row {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 2px;
+            }
+
+            .note-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 12px;
+            }
+
+            .task-status {
+                align-self: center;
+            }
+
+            .action-buttons {
+                justify-content: center;
+                width: 100%;
+            }
+
+            .btn-delete,
+            .btn-edit {
+                flex: 1;
+                justify-content: center;
+                min-height: 44px;
+                font-size: 0.9rem;
+            }
+
+            .modal-content {
+                margin: 5% auto;
+                padding: 20px;
+                width: 95%;
+            }
+
+            .modal h2 {
+                font-size: 1.5rem;
+                padding-right: 35px;
+            }
+
+            .modal input[type="text"],
+            .modal input[type="date"],
+            .modal input[type="time"],
+            .modal textarea,
+            .modal select {
+                font-size: 16px; /* Prevents zoom on iOS */
+                padding: 10px;
+            }
+        }
+
+        /* Extra small devices */
+        @media (max-width: 360px) {
+            .navbar {
+                padding: 10px 12px;
+            }
+
+            .nav-brand {
+                font-size: 1rem;
+            }
+
+            .nav-title {
+                font-size: 1rem;
+                margin: 0 8px;
+            }
+
+            .task-note {
+                padding: 15px;
+                min-height: 200px;
+            }
+
+            .note-title {
+                font-size: 1rem;
+            }
+
+            .sidebar-link {
+                padding: 12px 15px;
+                font-size: 0.9rem;
+                min-height: 45px;
+            }
+
+            /* Even smaller sidebar for very small screens */
+            .sidebar {
+                width: 90%;
+                left: -90%;
+                max-width: 280px;
+            }
+
+            .page-title {
+                font-size: 1.3rem;
+            }
+
+            .modal-content {
+                padding: 15px;
+            }
+        }
+
+        /* Landscape orientation adjustments */
+        @media (max-height: 500px) and (orientation: landscape) {
+            .navbar {
+                padding: 10px 20px;
+                margin-bottom: 15px;
+            }
+
+            .main-content {
+                padding: 10px 0;
+            }
+
+            .page-title {
+                font-size: 1.4rem;
+                margin-bottom: 20px;
+            }
+
+            .notes-container {
+                gap: 15px;
+                padding: 10px;
+            }
+
+            .task-note {
+                padding: 15px;
+                min-height: 180px;
+            }
+
+            .sidebar-header {
+                padding: 15px 20px;
+            }
+
+            .sidebar-link {
+                padding: 12px 20px;
+                min-height: 45px;
+            }
+
+            /* Landscape mobile sidebar adjustment */
+            .sidebar {
+                width: 70%;
+                left: -70%;
+                max-width: 300px;
+            }
+
+            .modal-content {
+                margin: 2% auto;
+                max-height: 95vh;
+            }
+        }
+
+        /* High DPI displays */
+        @media (-webkit-min-device-pixel-ratio: 2), (min-resolution: 192dpi) {
+            .hamburger span {
+                height: 2px;
+            }
+        }
+
+        /* Decorative Elements - Responsive */
+        .decorative-elements {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: -1;
+        }
+
+        .circle {
+            position: absolute;
+            border-radius: 50%;
+            background: var(--circle-bg);
+            animation: float 6s ease-in-out infinite;
+            transition: all 0.3s ease;
+        }
+
+        .circle:nth-child(1) {
+            width: 80px;
+            height: 80px;
+            top: 10%;
+            left: 10%;
+            animation-delay: 0s;
+        }
+
+        .circle:nth-child(2) {
+            width: 120px;
+            height: 120px;
+            top: 70%;
+            right: 10%;
+            animation-delay: 2s;
+        }
+
+        .circle:nth-child(3) {
+            width: 60px;
+            height: 60px;
+            top: 40%;
+            left: 80%;
+            animation-delay: 4s;
+        }
+
+        @media (max-width: 768px) {
+            .circle:nth-child(1) {
+                width: 60px;
+                height: 60px;
+            }
+
+            .circle:nth-child(2) {
+                width: 90px;
+                height: 90px;
+            }
+
+            .circle:nth-child(3) {
+                width: 45px;
+                height: 45px;
+            }
+        }
+
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0px);
+            }
+            50% {
+                transform: translateY(-20px);
+            }
+        }
+
+        /* Touch-friendly improvements */
+        @media (hover: none) and (pointer: coarse) {
+            .hamburger {
+                min-width: 48px;
+                min-height: 48px;
+            }
+
+            .sidebar-link {
+                min-height: 48px;
+                padding: 15px 20px;
+            }
+
+            .btn-delete,
+            .btn-edit {
+                min-height: 48px;
+            }
+
+            .modal button[type="submit"] {
+                min-height: 48px;
+            }
+        }
+
+        /* Reduced motion preferences */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                animation-duration: 0.01ms !important;
+                animation-iteration-count: 1 !important;
+                transition-duration: 0.01ms !important;
+            }
+        }
+    </style>
+    <script>
+        window.onload = function () {
+            // Hide loading screen after page loads
+            setTimeout(() => {
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('hidden');
+            }, 1500); // Show loading for 1.5 seconds
+        };
+    </script>
+</head>
+<body>
+    <!-- Page Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loader"></div>
+        <div class="loading-text">Loading TodoApp<span class="loading-dots"></span></div>
+    </div>
+
+    <div class="decorative-elements">
+        <div class="circle"></div>
+        <div class="circle"></div>
+        <div class="circle"></div>
+    </div>
+
+    <nav class="navbar">
+        <div class="nav-left">
+            <button class="hamburger" id="hamburger">
+                <span></span>
+                <span></span>
+                <span></span>
+            </button>
+            <div class="nav-brand">
+                <span>📝</span>
+                <span>TodoApp</span>
+            </div>
+        </div>
+        <h2 class="nav-title">Your Tasks</h2>
+        <div class="nav-right">
+            <!-- Theme toggle button removed -->
+        </div>
+    </nav>
+
+    <!-- Sidebar Overlay -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-brand">
+                <span>📝</span>
+                <span>TodoApp</span>
+            </div>
+        </div>
+        <div class="sidebar-menu">
+            <a href="/" class="sidebar-link home">
+                <span>🏠</span>
+                <span>Home</span>
+            </a>
+            <a href="/task" class="sidebar-link add-task">
+                <span>➕</span>
+                <span>Add Task</span>
+            </a>
+            <a href="/view_tasks" class="sidebar-link view-task">
+                <span>👁️</span>
+                <span>View Tasks</span>
+            </a>
+        </div>
+    </div>
+
+    <div class="main-content">
+        <h2 class="page-title">
+            <span>👁️</span>
+            Your Tasks
+        </h2>
+
+        <div class="notes-container">
+            {% if tasks %}
+                {% for task in tasks %}
+                {% set end_datetime_str = task.end_date.strftime('%Y-%m-%d') ~ ' ' ~ task.end_time.strftime('%H:%M:%S') %}
+                {% set end_datetime = end_datetime_str | todatetime %}
+                <div class="task-note {% if current_time > end_datetime %}completed{% endif %}">
+                    <div class="note-header">
+                        <h3 class="note-title">{{ task.title }}</h3>
+                        <span class="note-priority priority-{{ task.priority.lower() }}">
+                            {{ task.priority }}
+                        </span>
+                    </div>
+
+                    <div class="note-description">
+                        {{ task.description }}
+                    </div>
+
+                    <div class="note-dates">
+                        <div class="date-row">
+                            <span class="date-label">Start:</span>
+                            <span>
+                                <span class="date-value">{{ task.start_date.strftime('%Y-%m-%d') }}</span>
+                                <span class="time-value">{{ task.start_time.strftime('%H:%M') }}</span>
+                            </span>
+                        </div>
+                        <div class="date-row">
+                            <span class="date-label">End:</span>
+                            <span>
+                                <span class="date-value">{{ task.end_date.strftime('%Y-%m-%d') }}</span>
+                                <span class="time-value">{{ task.end_time.strftime('%H:%M') }}</span>
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="note-footer">
+                        <span class="task-status {% if current_time > end_datetime %}status-completed{% else %}status-active{% endif %}">
+                            {% if current_time > end_datetime %}
+                                Completed
+                            {% else %}
+                                Active
+                            {% endif %}
+                        </span>
+
+                        <div class="action-buttons">
+                            <form action="{{ url_for('delete_task', task_id=task.id) }}" method="POST" style="display: inline">
+                                <button type="submit" class="btn-delete" onclick="return confirm('Are you sure you want to delete this task?');">
+                                    Delete
+                                </button>
+                            </form>
+
+                            <a href="#" class="btn-edit" data-task-id="{{ task.id }}">
+                                Edit
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <div class="empty-state-icon">📝</div>
+                    <div class="empty-state-text">No tasks found</div>
+                    <div class="empty-state-subtext">Start by adding your first task!</div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Modal for Editing Task -->
+    <div id="editTaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Edit Task</h2>
+            <form id="editTaskForm" method="POST">
+                <input type="hidden" id="editTaskId" name="task_id">
+                <label for="editTitle">Title:</label>
+                <input type="text" id="editTitle" name="title" required><br><br>
+
+                <label for="editDescription">Description:</label>
+                <textarea id="editDescription" name="description"></textarea><br><br>
+
+                <label for="editStartDate">Start Date:</label>
+                <input type="date" id="editStartDate" name="start_date" required><br><br>
+
+                <label for="editEndDate">End Date:</label>
+                <input type="date" id="editEndDate" name="end_date" required><br><br>
+
+                <label for="editStartTime">Start Time:</label>
+                <input type="time" id="editStartTime" name="start_time" required><br><br>
+
+                <label for="editEndTime">End Time:</label>
+                <input type="time" id="editEndTime" name="end_time" required><br><br>
+
+                <label for="editPriority">Priority:</label>
+                <select id="editPriority" name="priority">
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select><br><br>
+
+                <button type="submit">Update Task</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const hamburger = document.getElementById('hamburger');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+
+        // Enhanced sidebar functionality with better touch support
+        function toggleSidebar() {
+            hamburger.classList.toggle('active');
+            sidebar.classList.toggle('active');
+            sidebarOverlay.classList.toggle('active');
+            
+            // Prevent body scroll when sidebar is open on mobile
+            if (sidebar.classList.contains('active')) {
+                document.body.style.overflow = 'hidden';
+            } else {
+                document.body.style.overflow = '';
+            }
+        }
+
+        function closeSidebar() {
+            hamburger.classList.remove('active');
+            sidebar.classList.remove('active');
+            sidebarOverlay.classList.remove('active');
+            document.body.style.overflow = '';
+        }
+
+        // Event listeners
+        hamburger.addEventListener('click', toggleSidebar);
+        sidebarOverlay.addEventListener('click', closeSidebar);
+
+        // Enhanced touch support for mobile devices
+        let touchStartX = 0;
+        let touchStartY = 0;
+        let touchEndX = 0;
+        let touchEndY = 0;
+
+        // Swipe to open/close sidebar
+        document.addEventListener('touchstart', function(e) {
+            touchStartX = e.changedTouches[0].screenX;
+            touchStartY = e.changedTouches[0].screenY;
+        });
+
+        document.addEventListener('touchend', function(e) {
+            touchEndX = e.changedTouches[0].screenX;
+            touchEndY = e.changedTouches[0].screenY;
+            handleSwipe();
+        });
+
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const swipeDistanceX = touchEndX - touchStartX;
+            const swipeDistanceY = Math.abs(touchEndY - touchStartY);
+            
+            // Only trigger swipe if horizontal movement is greater than vertical
+            if (Math.abs(swipeDistanceX) > swipeThreshold && swipeDistanceY < 100) {
+                if (swipeDistanceX > 0 && touchStartX < 50 && !sidebar.classList.contains('active')) {
+                    // Swipe right from left edge to open sidebar
+                    toggleSidebar();
+                } else if (swipeDistanceX < 0 && sidebar.classList.contains('active')) {
+                    // Swipe left to close sidebar
+                    closeSidebar();
+                }
+            }
+        }
+
+        // Close sidebar when pressing Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                closeSidebar();
+            }
+        });
+
+        // Close sidebar when clicking on a link
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.addEventListener('click', closeSidebar);
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', function() {
+            // Close sidebar on resize to prevent layout issues
+            if (window.innerWidth > 768 && sidebar.classList.contains('active')) {
+                closeSidebar();
+            }
+        });
+
+        // Handle page visibility changes (for back/forward navigation)
+        document.addEventListener('visibilitychange', function() {
+            if (document.visibilityState === 'visible') {
+                // Reset loading state when page becomes visible again
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('hidden');
+            }
+        });
+
+        // Handle browser back/forward buttons
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                // Reset loading state for cached pages
+                const loadingScreen = document.getElementById('loadingScreen');
+                loadingScreen.classList.add('hidden');
+            }
+        });
+
+        // Get the modal
+        var modal = document.getElementById("editTaskModal");
+
+        // Get the button that opens the modal
+        var editButtons = document.querySelectorAll(".btn-edit");
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks the button, open the modal
+        editButtons.forEach(function(button) {
+            button.onclick = function() {
+                var taskId = this.getAttribute("data-task-id");
+                document.getElementById("editTaskId").value = taskId;
+
+                // Fetch task details and populate the form
+                fetch(`/get_task_details/${taskId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById("editTitle").value = data.title;
+                        document.getElementById("editDescription").value = data.description;
+                        document.getElementById("editStartDate").value = data.start_date;
+                        document.getElementById("editEndDate").value = data.end_date;
+                        document.getElementById("editStartTime").value = data.start_time;
+                        document.getElementById("editEndTime").value = data.end_time;
+                        document.getElementById("editPriority").value = data.priority;
+                    });
+
+                modal.style.display = "block";
+                document.body.style.overflow = 'hidden'; // Prevent background scroll
+            }
+        });
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function() {
+            modal.style.display = "none";
+            document.body.style.overflow = '';
+        }
+
+        // When the user clicks anywhere outside of the modal, close it
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = "none";
+                document.body.style.overflow = '';
+            }
+        }
+
+        // Handle form submission
+        document.getElementById("editTaskForm").onsubmit = function(event) {
+            event.preventDefault();
+            var formData = new FormData(this);
+
+            fetch("/update_task", {
+                method: "POST",
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert("Task updated successfully!");
+                    modal.style.display = "none";
+                    document.body.style.overflow = '';
+                    location.reload(); // Reload the page to see the changes
+                } else {
+                    alert("Failed to update task.");
+                }
+            });
+        }
+
+        // Prevent zoom on iOS when focusing inputs
+        if (/iPad|iPhone|iPod/.test(navigator.userAgent)) {
+            const inputs = document.querySelectorAll('input, textarea, select');
+            inputs.forEach(input => {
+                input.addEventListener('focus', function() {
+                    if (this.style.fontSize !== '16px') {
+                        this.style.fontSize = '16px';
+                    }
+                });
+            });
+        }
+    </script>
+</body>
+</html>
